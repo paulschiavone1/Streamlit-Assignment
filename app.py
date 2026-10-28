@@ -141,6 +141,10 @@ if "customers" not in st.session_state:
 st.button("🔄 Refresh Data", on_click=refresh_data)
 ss = st.session_state
 
+if not ss.customers or not ss.products:
+    st.error("No customers or products are available from Supabase. Refresh the data or check the database.")
+    st.stop()
+
 left, right = st.columns(2)
 with left:
     st.subheader("Customers")
@@ -156,6 +160,10 @@ with right:
 st.subheader("New Order")
 cust_names = {c["customer_id"]: c["name"] for c in ss.customers}
 prod_by_id = {p["product_id"]: p for p in ss.products}
+if ss.get("customer_id") not in cust_names:
+    ss.customer_id = next(iter(cust_names))
+if ss.get("product_id") not in prod_by_id:
+    ss.product_id = next(iter(prod_by_id))
 st.selectbox("Customer", list(cust_names), format_func=lambda i: cust_names[i], key="customer_id")
 st.selectbox("Product", list(prod_by_id), format_func=lambda i: prod_by_id[i]["product_name"], key="product_id")
 st.number_input("Quantity", min_value=1, step=1, value=1, key="quantity")
