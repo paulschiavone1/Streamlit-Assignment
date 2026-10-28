@@ -1,94 +1,113 @@
-# Streamlit Order Entry
+# Streamlit Order Entry App
 
-A Streamlit order-entry app that reads customers, products, and order history from
-Supabase and inserts confirmed orders. The app uses a server-checked password gate
-before accessing the database.
+Web version of the order-entry program. Users choose a customer and product,
+enter a quantity, review and confirm the order, and save it to Supabase. Each
+saved order is queried again from the database for verification.
+
+**Deployed app:** [Open the Streamlit order-entry app](https://app-assignment-2kzzmejvrzfhkzkvj3davp.streamlit.app/)
+
+The app is password-protected. The access password should be provided privately
+through the course submission system, not in this repository.
 
 ## Files
 
-- `app.py` — Streamlit interface and order workflow.
-- `Database.py` — Supabase Data API queries and inserts.
-- `Config.py` — Reads app settings from Streamlit secrets or a local `.env`.
-- `requirements.txt` — Python package dependencies.
-- `.env.example` — Placeholder configuration for local development.
+| File | Purpose |
+|---|---|
+| `app.py` | Streamlit interface and order workflow |
+| `Database.py` | Supabase API queries and inserts |
+| `Config.py` | Reads credentials from Streamlit secrets or local `.env` |
+| `requirements.txt` | Required Python packages |
+| `.env.example` | Placeholder values for local development |
+| `.gitignore` | Excludes `.env` and `.streamlit/secrets.toml` |
 
 ## Run locally
 
-1. Install Python and the packages:
+1. Create and activate a virtual environment, then install dependencies:
 
    ```bash
+   python -m venv .venv
+   source .venv/bin/activate
    python -m pip install -r requirements.txt
    ```
 
-2. Copy `.env.example` to `.env` and set your own values:
-
-   ```dotenv
-   APP_PASSWORD=choose-a-strong-classroom-password
-   SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-   SUPABASE_SECRET_KEY=sb_secret_your_key
-   ```
-
-   Keep `.env` private; it is excluded by `.gitignore`.
-
-3. Start the app:
+2. Copy `.env.example` to `.env` and replace the placeholders with your own
+   Supabase URL, Supabase secret key, and app password.
+3. Run the app:
 
    ```bash
    streamlit run app.py
    ```
 
-## Deploy to Streamlit Community Cloud
+Keep `.env` private; it is excluded by `.gitignore`.
 
-1. Push this repository to GitHub.
-2. In [Streamlit Community Cloud](https://share.streamlit.io/), create an app from
-   this repository and branch, using `app.py` as the entry point.
-3. In the app's **Settings → Secrets**, add:
+## Streamlit Community Cloud secrets
 
-   ```toml
-   APP_PASSWORD = "choose-a-strong-classroom-password"
-   SUPABASE_URL = "https://YOUR_PROJECT.supabase.co"
-   SUPABASE_SECRET_KEY = "sb_secret_your_key"
-   ```
+The local `.env` file is not uploaded to Streamlit Community Cloud. In the
+deployed app's **Settings → Secrets**, configure:
 
-4. Restrict app access to the instructor and authorized viewers. Provide any
-   password privately through the course submission system, not in this README.
-5. After deployment, add the working application URL here:
+```toml
+SUPABASE_URL = "https://your-project.supabase.co"
+SUPABASE_SECRET_KEY = "sb_secret_your_key"
+APP_PASSWORD = "your-classroom-password"
+```
 
-   **Deployed app:** _Pending deployment_
+Save the secrets and restart/redeploy the app. Do not commit the real values to
+GitHub. Restrict app access to authorized viewers and provide the password to
+the instructor privately.
 
-## Testing
+## How it works
 
-The source implements the checks below, but deployment-specific results must be
-recorded after testing the hosted app. Do not mark a test as passed until it has
-been performed against the deployed URL.
+- **Display:** Customers and products are loaded through the Supabase API and
+  shown in readable tables with prices formatted as currency. **Refresh Data**
+  reloads customers, products, and order history.
+- **Validation:** Customer and product dropdowns display names while retaining
+  their database IDs. Quantity is a positive whole-number input and is also
+  checked before insertion.
+- **Saving:** The insert runs only from the submit button callback and only
+  after confirmation. The app reads the current product price again at
+  submission; if it changed, the updated price is shown and confirmation is
+  required again.
+- **Verification:** After insertion, the generated order ID is used in a
+  separate database query. The verification table shows the retrieved record
+  and calculates the total from its stored `unit_price`. If verification fails,
+  the app explains that the order was saved but could not be retrieved and does
+  not automatically submit it again.
+- **Access control:** A password gate reads `APP_PASSWORD` from secrets and runs
+  before any database access. This is a classroom access control, not a
+  production customer-login system.
+- **Extra credit:** Order History includes a customer filter and displays the
+  filtered orders' total value using stored sale prices.
 
-| Test | Result |
-|---|---|
-| Hosted app opens for an authorized viewer | Pending deployment |
-| Customers and products load from Supabase | Pending hosted test |
-| Quantity input rejects non-positive/non-whole values | Pending hosted test |
-| Submit without confirmation inserts no order | Pending hosted test |
-| Confirmed valid submission inserts exactly one order | Pending hosted test |
-| Verification table retrieves the saved order by generated ID | Pending hosted test |
-| Reruns and widget changes do not insert duplicate orders | Pending hosted test |
-| Refresh keeps saved orders visible in order history | Pending hosted test |
-| Customer filter and stored-price total work | Pending hosted test |
+The app uses Streamlit, pandas, the Supabase Python client, `python-dotenv`,
+Python's `Decimal` for currency calculations, and `hmac.compare_digest` for
+password comparison.
+
+## Testing results
+
+Record results after testing the deployed application. Do not mark tests passed
+unless they have been run against the hosted URL.
+
+| Test | Expected result | Result |
+|---|---|---|
+| Open deployed app | Loads after authorized access | Pending |
+| View customers and products | Records retrieved from Supabase | Pending |
+| Try invalid quantity | Input prevented or rejected | Pending |
+| Submit without confirmation | No order inserted | Pending |
+| Confirm and submit valid order | Exactly one order inserted | Pending |
+| View verification table | New order retrieved from Supabase | Pending |
+| Refresh or change another widget | No duplicate order inserted | Pending |
+| Refresh order history | Saved order remains visible | Pending |
+| Filter order history by customer | Only that customer's orders and their stored-price total appear | Pending |
 
 Add credential-free screenshots after testing:
 
 - `screenshots/order-entry.png` — order-entry interface.
-- `screenshots/verified-order.png` — retrieved saved-order verification.
+- `screenshots/verified-order.png` — successfully verified order.
 
-## How it works
+## References
 
-The selectboxes show customer and product names while their selected IDs are
-retained for database calls. A number input restricts quantity to positive
-integers. The review section displays the current displayed price and total;
-the confirmation checkbox and submit button gate the insert. On submission,
-the app fetches the current product price again and requires fresh confirmation
-if it changed. The database supplies the generated order ID and the app performs
-a separate query for that ID before showing the verified record. Order history
-and its customer filter use records fetched from Supabase.
-
-The app uses Streamlit for the web interface, pandas for table presentation,
-the Supabase Python client for Data API calls, `python-dotenv` for local
-configuration, and Python's `Decimal` for currency calculations.
+- [Streamlit documentation](https://docs.streamlit.io/)
+- [Streamlit Community Cloud deployment](https://docs.streamlit.io/deploy/streamlit-community-cloud)
+- [Supabase Python client](https://supabase.com/docs/reference/python/introduction)
+- [python-dotenv](https://pypi.org/project/python-dotenv/)
+- [pandas documentation](https://pandas.pydata.org/docs/)
